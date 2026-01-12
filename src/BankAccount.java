@@ -8,6 +8,7 @@ public class BankAccount {
         this.accountNumber = accountNumber;
         this.customerName = customerName;
         this.balance = balance;
+        System.out.println("Account is Created!");
     }
     public int getAccountNumber(){
         return this.accountNumber;
@@ -19,16 +20,18 @@ public class BankAccount {
         return this.balance;
     }
 
-    public void deposit(double amount){
+    public boolean deposit(double amount){
         if(amount <= 0){
             System.out.println("Negative amount not allowed during deposit!");
         }
         else {
             this.balance += amount;
             System.out.println("Deposited Amount: " + amount);
+            return true;
         }
+        return false;
     }
-    public void withdraw(double amount){
+    public boolean withdraw(double amount){
         if(amount <= 0){
             System.out.println("Invalid withdrawal amount");
         }
@@ -38,6 +41,8 @@ public class BankAccount {
         else{
             this.balance -= amount;
             System.out.println("Withdrawn Amount: " + amount);
+            return true;
         }
+        return false;
     }
 }

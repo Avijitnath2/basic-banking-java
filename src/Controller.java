@@ -4,47 +4,28 @@ import java.util.Scanner;
 public class Controller {
     public static void main(String[] args){
         Scanner sc = new Scanner(System.in);
-        int acts = -1;
+        int acts = 0;
         BankAccount myAccount;
-        System.out.println("\nWelcome to the Basic Bank!\n");
-        int choice = 0;
+        System.out.println("\nWelcome to the ABC Bank!\n");
+        int choice;
         do{
             System.out.println("\nPlease select below options:");
             System.out.println("1.Create a new account");
             System.out.println("2.Sign in to an existing account");
             System.out.println("3.Exit\n");
 
-            System.out.print("Enter your choice: ");
-            try {
-                choice = getChoice(sc);
-                sc.nextLine();
-            }catch (InputMismatchException e){
-                System.out.println("Invalid input! Please enter a valid choice.\n");
-                sc.next();
-                continue;
-            }
+            choice = getChoice(sc);
+            boolean isGoBack;
             switch (choice){
                 case 1:
-                    while (true) {
-                        try {
-                            createAccount(sc, (++acts));
-                            break;
-                        } catch (InputMismatchException e) {
-                            System.out.println("Invalid Input! Enter valid details.");
-                            sc.next();
-                        }
+                    isGoBack = createAccount(sc, acts);
+                    if(isGoBack){
+                        continue;
                     }
+                    acts++;
                     break;
                 case 2:
-                    while (true){
-                        try {
-                            myAccount = loginAccount(sc);
-                            break;
-                        }catch (InputMismatchException e){
-                            System.out.println("Invalid Input! Enter valid details.");
-                            sc.next();
-                        }
-                    }
+                    myAccount = loginAccount(sc);
                     if(myAccount == null){
                         continue;
                     }
@@ -58,18 +39,25 @@ public class Controller {
                     System.out.println("Invalid choice!");
             }
         }while (choice != 3);
+        sc.close();
     }
 
-    private static void createAccount(Scanner sc,int acts){
+    private static boolean createAccount(Scanner sc,int acts){
         int accountNumber;
         String customerName;
         double balance;
-        System.out.println("Please enter the necessary details to create an account: ");
         boolean checkAccounts;
+        if(acts == BankAccount.accounts.length){
+            System.out.println("Maximum account limit reached!");
+            return true;
+        }
+        System.out.println("Please enter the necessary details to create an account: ");
         do{
             checkAccounts = false;
-            System.out.print("Account Number: ");
-            accountNumber = sc.nextInt();sc.nextLine();
+            accountNumber = readAcc(sc);
+            if (accountNumber == 0){
+                return true;
+            }
             if(acts == 0){
                 break;
             }
@@ -86,46 +74,40 @@ public class Controller {
         }while (checkAccounts);
         System.out.print("Customer Name: ");
         customerName = sc.nextLine();
-        System.out.print("Starting Balance: ");
-        balance = sc.nextDouble();sc.nextLine();
+        System.out.println("Starting Balance: ");
+        balance = readAmount(sc);
         BankAccount myAccount = new BankAccount(accountNumber,customerName,balance);
-        System.out.println("Account is Created!");
         BankAccount.accounts[acts] = myAccount;
+        return false;
     }
 
     private static BankAccount loginAccount(Scanner sc){
         int accountNumber;
-        boolean checkAccounts;
+        boolean foundAccount = false;
         BankAccount myAccount = null;
-        do{
-            checkAccounts = false;
-            System.out.println("Please enter your correct details to login:");
 
-            System.out.print("Account Number (Press '0' to go back): ");
-            accountNumber = sc.nextInt();sc.nextLine();
+        System.out.println("Please enter your correct details to login:");
 
-            if(accountNumber == 0){
-                return null;
+        accountNumber = readAcc(sc);
+        if(accountNumber == 0){
+            return null;
+        }
+        for(BankAccount existAccounts: BankAccount.accounts){
+            if(existAccounts != null && existAccounts.getAccountNumber() == accountNumber){
+                foundAccount = true;
+                myAccount = existAccounts;
+                break;
             }
-
-            for(BankAccount existAccounts: BankAccount.accounts){
-                if(existAccounts == null){
-                    System.out.println("No account exists with this details.\n");
-                    break;
-                }
-                if(existAccounts.getAccountNumber() == accountNumber){
-                    System.out.println("Logged in successfully!\n");
-                    checkAccounts = true;
-                    myAccount = existAccounts;
-                    break;
-                }
-            }
-        }while (!checkAccounts);
+        }
+        if(!foundAccount){
+            System.out.println("No account exists with these details.\n");
+            return null;
+        }
         return myAccount;
     }
     private static void mainMenu(BankAccount myAccount,Scanner sc){
         System.out.println("Welcome to your account " + myAccount.getCustomerName());
-        int choice = 0;
+        int choice;
         double amount;
         do{
             System.out.println();
@@ -135,44 +117,24 @@ public class Controller {
             System.out.println("3. Check your Balance,");
             System.out.println("4. Logout.\n");
 
-            System.out.print("Enter your choice: ");
-            try {
-                choice = getChoice(sc);
-                sc.nextLine();
-            }catch (InputMismatchException e){
-                System.out.println("Invalid input! Please enter a valid choice.\n");
-                sc.next();
-                continue;
-            }
-
+            choice = getChoice(sc);
+            boolean checkTransactions;
             switch (choice){
                 case 1:
-
-                    while (true){
-                        try {
-                            System.out.print("Enter the deposit amount: ");
-                            amount = sc.nextDouble();sc.nextLine();
-                            break;
-                        }catch (InputMismatchException e){
-                            System.out.println("Invalid Input! Enter valid details.");
-                            sc.next();
-                        }
+                    checkTransactions = false;
+                    while (!checkTransactions){
+                        System.out.println("Deposit: ");
+                        amount = readAmount(sc);
+                        checkTransactions = myAccount.deposit(amount);
                     }
-                    myAccount.deposit(amount);
                     break;
                 case 2:
-
-                    while (true){
-                        try {
-                            System.out.print("Enter the amount to withdraw: ");
-                            amount = sc.nextDouble();sc.nextLine();
-                            break;
-                        }catch (InputMismatchException e){
-                            System.out.println("Invalid Input! Enter valid details.");
-                            sc.next();
-                        }
+                    checkTransactions = false;
+                    while (!checkTransactions){
+                        System.out.println("Withdraw: ");
+                        amount = readAmount(sc);
+                        checkTransactions = myAccount.withdraw(amount);
                     }
-                    myAccount.withdraw(amount);
                     break;
                 case 3:
                     System.out.println("Current Balance: " + myAccount.getBalance());
@@ -185,8 +147,52 @@ public class Controller {
             }
         }while (choice != 4);
     }
+    private static double readAmount(Scanner sc){
+        double amt;
+        while (true){
+            try {
+                System.out.print("Enter your amount: ");
+                amt = sc.nextDouble();sc.nextLine();
+                if(amt <= 0){
+                    System.out.println("Amount must be positive!");
+                    continue;
+                }
+                return amt;
+            }catch (InputMismatchException e){
+                System.out.println("Invalid Input! Enter valid details.");
+                sc.nextLine();
+            }
+        }
+    }
+    private static int readAcc(Scanner sc){
+        int acc;
+        while(true){
+            try {
+                System.out.print("Account Number (Press '0' to go back): ");
+                acc = sc.nextInt();sc.nextLine();
+                if(acc < 0){
+                    System.out.println("Account Number must be positive!");
+                    continue;
+                }
+                return acc;
+            }catch (InputMismatchException e){
+                System.out.println("Invalid Input! Enter valid details.");
+                sc.nextLine();
+            }
+        }
+    }
 
     private static int getChoice(Scanner sc) {
-        return sc.nextInt();
+        int choice;
+        while(true){
+            try {
+                System.out.print("Enter your choice: ");
+                choice = sc.nextInt();sc.nextLine();
+                return choice;
+            }catch (InputMismatchException e){
+                System.out.println("Invalid Input! Enter valid details.");
+                sc.nextLine();
+            }
+        }
     }
 }
